@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://gabreilcheng.github.io</id>
     <title>liyicheng</title>
-    <updated>2020-09-01T13:44:51.613Z</updated>
+    <updated>2020-09-09T15:45:36.264Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://gabreilcheng.github.io"/>
     <link rel="self" href="https://gabreilcheng.github.io/atom.xml"/>
@@ -10,6 +10,61 @@
     <logo>https://gabreilcheng.github.io/images/avatar.png</logo>
     <icon>https://gabreilcheng.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, liyicheng</rights>
+    <entry>
+        <title type="html"><![CDATA[java开发手册灵魂13问]]></title>
+        <id>https://gabreilcheng.github.io/post/java-hot13/</id>
+        <link href="https://gabreilcheng.github.io/post/java-hot13/">
+        </link>
+        <updated>2020-09-09T15:18:17.000Z</updated>
+        <content type="html"><![CDATA[<p>1、三目运算符😊<br>
+三目运算符 condition ？ 表达式1 ： 表达式2  ，注意表达式1 和表达式2 在对齐时可能因自动拆箱导致的空指针异常。比如：<br>
+说明：以下场景下会触发类型对齐的拆箱操作：<br>
+1、表达式1 和 表达式2 的值只要有一个是原始类型；<br>
+2、表达式1 和 表达式2 的值的类型不一致，会强制拆箱升级成表示范围更大的那个类型。<br>
+Integer a  = 1;<br>
+Integer b  = 2;<br>
+Integer c  = null;<br>
+boolean flag = false;<br>
+Integer result = flag ?  a*b : c ;  // 出现NPE<br>
+<strong>三目运算符介绍</strong><br>
+以上，通过？ ：组合的形式得到一个条件表达式。其中？运算符的含义是：先<br>
+求表达式 1 的值，如果为真，则执行并返回表达式 2 的结果；如果表达式 1 的值为<br>
+假，则执行并返回表达式 3 的结果。<br>
+值得注意的是，一个条件表达式从不会既计算 &lt; 表达式 2&gt;，又计算 &lt; 表达式<br>
+3&gt;。条件运算符是右结合的，也就是说，从右向左分组计算。例如，a?b:c?d:e 将按<br>
+a?b:（c?d:e）执行。</p>
+<p>当第二位和第三位表达式都是包装类型的时候，该表达式的结果才是该包装类型，否则，只要有一个表达式的类型是基本数据类型，则表达式得到的结果都是基本数据类型。如果结果不符合预期，那么编译器就会进行自动拆箱。<br>
+出一个题目：<br>
+Map&lt;String,Boolean&gt; map = new HashMap&lt;String, Boolean&gt;();<br>
+Boolean b = (map!=null ? map.get(“Hollis”) : false);<br>
+如果你的答案是 &quot; 不能，这里会抛 NPE&quot; 那么说明你看懂了本文的内容，但是，<br>
+我只能说你只是答对了一半。<br>
+因为以上代码，在小于 JDK 1.8 的版本中执行的结果是 NPE，在 JDK 1.8 及<br>
+以后的版本中执行结果是 null。<br>
+之所以会出现这样的不同，这个就说来话长了，我挑其中的重点内容简单介绍下吧，以下内容主要内容还是围绕 Java 8 的 JLS 。JLS 15 中对条件表达式（三目运算符）做了细分之后分为三种，区分方式：<br>
+● 如果表达式的第二个和第三个操作数都是布尔表达式，那么该条件表达式就是布尔表达式<br>
+● 如果表达式的第二个和第三个操作数都是数字型表达式，那么该条件表达式就是数字型表达式<br>
+● 除了以上两种以外的表达式就是引用表达式<br>
+因为 Boolean b = (map!=null ? map.get(&quot;Hollis&quot;) : false); 表达式中，第二位操作数为 map.get(&quot;test&quot;)，虽然 Map 在定义的时候规定了其值类型为 Boolean，但是在编译过程中泛型是会被擦除的（泛型的类型擦除），所以，其结果就是 Object。那么根据以上规则判断，这个表达式就是引用表达式。又跟据 JLS15.25.3 中规定：<br>
+● 如果引用条件表达式出现在赋值上下文或调用上下文中，那么条件表达式就是合成表达式<br>
+因为，Boolean b = (map!=null ? map.get(&quot;Hollis&quot;) : false);其实就是一个赋值上下文（关于赋值上下文相见 JLS 5.2），所以 map!=null ? map.get(&quot;Hollis&quot;) : false; 就是合成表达式。<br>
+那么 JLS15.25.3 中对合成表达式的操作数类型做了约束：<br>
+● 合成的引用条件表达式的类型与其目标类型相同<br>
+所以，因为有了这个约束，编译器就可以推断（Java 8 中类型推断，详见 JLS<br>
+18）出该表达式的第二个操作数和第三个操作数的结果应该都是 Boolean 类型。<br>
+所以，在编译过程中，就可以分别把他们都转成 Boolean 即可，那么以上代码<br>
+在 Java 8 中反编译后内容如下：<br>
+Boolean b = maps == null ? Boolean.valueOf(false) : (Boolean)maps.get(&quot;Hollis&quot;);<br>
+但是在 Java 7 中可没有这些规定（Java 8 之前的类型推断功能还很弱），编译<br>
+器只知道表达式的第二位和第三位分别是基本类型和包装类型，而无法推断最终表达<br>
+式类型。<br>
+那么他就会先根据 JLS 15.25 的规定，把返回值结果转换成基本类型。然后在<br>
+进行变量赋值的时候，再转换成包装类型：<br>
+Boolean b = Boolean.valueOf(maps == null ? false : ((Boolean)maps.<br>
+get(&quot;Hollis&quot;)).booleanValue());<br>
+所以，相比 Java 8 中多了一步自动拆箱，所以会导致 NPE。</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[第一篇博客]]></title>
         <id>https://gabreilcheng.github.io/post/firstBlog/</id>
